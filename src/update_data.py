@@ -80,11 +80,17 @@ def publish_snapshot(dataset: dict, output: Path) -> None:
     """Atomically replace one self-contained JS snapshot after regression checks."""
     if output.exists():
         old_text = output.read_text(encoding="utf-8")
-        old = json.loads(old_text.removeprefix("window.ETF_DATA = ").rstrip(";\n"))
-        if dataset["as_of"] < old["as_of"]:
+        # The repository starts with a deliberately empty ``window.ETF_DATA
+        # = null`` seed. Treat that as no prior release; later releases are
+        # parsed only from the generated JSON payload.
+        if "window.ETF_DATA =" not in old_text:
+            raise ValueError("Existing data.js has an unexpected format")
+        payload = old_text.split("window.ETF_DATA =", 1)[1].strip().rstrip(";\n").strip()
+        old = None if payload == "null" else json.loads(payload)
+        if old is not None and dataset["as_of"] < old["as_of"]:
             raise ValueError("New data regresses the last published date")
-        old_symbols = set(old["prices"])
-        if old_symbols == set(dataset["prices"]) and dataset["dates"][0] > old["dates"][0]:
+        old_symbols = set(old["prices"]) if old is not None else set()
+        if old is not None and old_symbols == set(dataset["prices"]) and dataset["dates"][0] > old["dates"][0]:
             raise ValueError("New response truncates historical coverage")
     output.parent.mkdir(parents=True, exist_ok=True)
     content = "window.ETF_DATA = " + json.dumps(dataset, ensure_ascii=False, allow_nan=False, separators=(",", ":")) + ";\n"
