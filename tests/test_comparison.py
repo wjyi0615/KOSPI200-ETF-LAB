@@ -58,3 +58,7 @@ class ComparisonTests(unittest.TestCase):
         self.assertEqual(len(parse_naver(xml, '2026-01-06')), 3)
         with self.assertRaises(ValueError):
             parse_naver(xml.replace(b'|101|', b'|0|'), '2026-01-06')
+
+    def test_euc_kr_xml_is_decoded_before_parsing(self):
+        xml = '<?xml version="1.0" encoding="EUC-KR"?><chart><item data="20260102|1|1|1|100|10"/><item data="20260105|1|1|1|101|10"/><item data="20260106|1|1|1|102|10"/></chart>'.encode('euc-kr')
+        self.assertEqual(len(parse_naver(xml, '2026-01-06')), 3)
