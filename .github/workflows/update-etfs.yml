@@ -13,7 +13,7 @@ on:
       - 'requirements.txt'
       - '.github/workflows/update-etfs.yml'
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: etf-pages
   cancel-in-progress: false
@@ -21,13 +21,6 @@ jobs:
   update:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -53,10 +46,5 @@ jobs:
             git commit -m 'Refresh validated ETF price snapshot'
             git push origin HEAD:main
           fi
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs
-      - name: Deploy only after successful collection and tests
-        id: deployment
-        uses: actions/deploy-pages@v4
+      # Pages is configured as main/docs in the repository settings. The
+      # successful push above triggers GitHub's built-in Pages deployment.
