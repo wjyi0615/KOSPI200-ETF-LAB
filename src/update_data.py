@@ -31,7 +31,15 @@ def completed_date(now: datetime | None = None) -> str:
 
 def parse_naver(payload: bytes, end: str) -> pd.DataFrame:
     """Validate the vendor XML schema, filtering out dates outside the request."""
-    rows = [item.attrib["data"].split("|") for item in ET.fromstring(payload).iter("item")]
+    # NAVER's chart endpoint declares EUC-KR. Passing the raw bytes directly
+    # to ElementTree raises ``ValueError: multi-byte encodings are not
+    # supported`` on current Python, so decode the declared legacy encoding
+    # before parsing the XML text.
+    try:
+        decoded = payload.decode("euc-kr")
+    except UnicodeDecodeError as exc:
+        raise ValueError("NAVER response is not valid EUC-KR XML") from exc
+    rows = [item.attrib["data"].split("|") for item in ET.fromstring(decoded).iter("item")]
     if not rows or any(len(row) != 6 for row in rows):
         raise ValueError("NAVER returned no data or an unexpected schema")
     frame = pd.DataFrame(rows, columns=["Date", "Open", "High", "Low", "Close", "Volume"])
