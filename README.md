@@ -1,146 +1,129 @@
-# KOSPI200-ETF-LAB
+# KOSPI200 ETF LAB
 
-## 🌐 웹사이트 바로 보기
+**[웹사이트 보기](https://wjyi0615.github.io/KOSPI200-ETF-LAB/)** · [데이터 갱신 기록](https://github.com/wjyi0615/KOSPI200-ETF-LAB/actions/workflows/update-etfs.yml)
 
-**[KOSPI200 ETF LAB 웹사이트 열기 →](https://wjyi0615.github.io/KOSPI200-ETF-LAB/)**
+같은 KOSPI200 지수를 추종하는 네 ETF의 가격 성과와 위험을 공통 거래기간으로 비교하는 Python 리서치 프로젝트입니다.
+데이터 수집 → 검증 → 성과 계산 → 시각화 → 자동 게시 과정을 재현할 수 있도록 구성했습니다.
 
-브라우저에서 연도별 성과와 누적수익률·낙폭·종가 차트를 확인할 수 있습니다. 현재는 KODEX 200 기준선 분석을 제공합니다.
+## 비교 대상
 
-[![KODEX 200 성과 분석 미리보기](docs/performance.png)](https://wjyi0615.github.io/KOSPI200-ETF-LAB/)
+| ETF | 종목코드 | 운용사 |
+|---|---|---|
+| KODEX 200 | 069500 | 삼성자산운용 |
+| TIGER 200 | 102110 | 미래에셋자산운용 |
+| RISE 200 | 148020 | KB자산운용 |
+| PLUS 200 | 152100 | 한화자산운용 |
 
-여러 운용사의 KOSPI200 ETF를 비교하기 위한 Python 리서치 프로젝트입니다.
-현재 구현은 **KODEX 200 단일 ETF 기준선 MVP**이며, 다중 ETF 비교와 팩터 전략은 확장 예정입니다.
+대상은 `config/etfs.json`에서 관리합니다. 현재 레버리지·인버스·TR 상품은 제외합니다.
 
-KODEX 200(069500)의 일별 종가를 수집하고 매수 후 보유 성과를 분석하는 Python MVP.
-현재 단계는 팩터 전략을 비교하기 위한 기준선이다. Python 3.11에서 검증한다.
+## 화면에서 확인할 수 있는 것
 
-## 실행
+- 전체 기간 및 연도별 가격 수익률, CAGR, 연환산 변동성, Sharpe, 최대 낙폭
+- 누적수익률·종가·낙폭 차트
+- **차이 확대:** KODEX 200을 0% 기준으로 놓고 상대 성과를 표시하는 차트와 표
+- 마지막 공통 거래일과 수집 시각
 
-프로젝트 폴더에서 실행한다.
+상대 성과는 `(1 + ETF 누적수익률) / (1 + KODEX 200 누적수익률) - 1`입니다.
+단순 수익률 차이(%p)와 다릅니다. 차이 확대 차트는 세로축을 자동 조절하므로 전체 수익률 차트와 함께 해석합니다.
 
-```sh
+**CAGR이 —인 이유:** 화면에서는 경과일수 / 365.25가 1 미만이면 CAGR을 숨깁니다.
+2026 YTD처럼 짧은 기간을 연환산해 오해하는 것을 줄이기 위한 표시 규칙입니다.
+선택한 연도에 따라 연말 거래일 사이가 365.25일 미만이면 과거 연도에서도 —가 표시될 수 있습니다.
+전체 기간을 선택하면 장기 CAGR을 확인할 수 있습니다.
+
+## 실행하기
+
+Python 3.11을 기준으로 구성했습니다.
+
+```bash
+git clone https://github.com/wjyi0615/KOSPI200-ETF-LAB.git
+cd KOSPI200-ETF-LAB
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-python -m src.data_loader --symbol 069500 --start 2023-01-01 --end 2025-12-31
-python -m src.backtest --input data/raw/069500_naver_2023-01-01_2025-12-31.csv
 python -m unittest discover -s tests -v
 ```
 
-첫 수집에는 인터넷이 필요하다. 이후 분석은 저장한 CSV와 같은 이름의 JSON만으로 오프라인 실행된다.
-조회 시작·종료일은 모두 포함하며 휴장일은 생성하지 않는다. 기간과 종목은 인자로 변경할 수 있다.
-무위험수익률은 기본 0%, 예를 들어 연 3%를 가정하려면 분석 명령에 `--risk-free-rate 0.03`을 붙인다.
-가상환경과 대용량 원본·결과는 Git에서 제외한다. CSV와 JSON을 함께 보관해야 체크섬 검증이 가능하다.
+네 ETF의 데이터를 수집하고 웹페이지 스냅샷을 갱신합니다. 인터넷 연결이 필요합니다.
 
-## 구조
+```bash
+python -m src.update_data
+python -m http.server 8000 --directory docs
+```
+
+브라우저에서 [로컬 미리보기](http://localhost:8000)를 엽니다.
+저장된 `docs/data.js`가 있으면 `docs/index.html`을 직접 열어 오프라인으로도 볼 수 있습니다.
+로컬 파일은 공개 사이트의 갱신 결과를 자동으로 받지 않으므로, 최신 저장소를 받거나 수집 명령을 다시 실행해야 합니다.
+
+단일 ETF 분석도 실행할 수 있습니다.
+
+```bash
+python -m src.data_loader --symbol 069500 --start 2023-01-01 --end 2025-12-31
+python -m src.backtest --input data/raw/069500_naver_2023-01-01_2025-12-31.csv
+```
+
+분석 결과는 `data/processed/`와 `results/`에 저장됩니다.
+단일 ETF 수집은 FinanceDataReader의 NAVER 소스를 사용하며, `--provider yahoo`로 Yahoo 어댑터를 선택할 수 있습니다.
+자동 비교 수집은 NAVER 차트 endpoint를 직접 사용합니다. 공급자가 실패해도 다른 공급자의 데이터를 자동 혼합하지 않습니다.
+
+## 계산과 검증
+
+| 지표 | 정의 |
+|---|---|
+| 일별수익률 | P[t] / P[t-1] − 1 |
+| 누적수익률 | P[t] / P[0] − 1 |
+| CAGR | (P끝 / P시작)^(365.25 / 경과일수) − 1 |
+| 연환산 변동성 | 일별수익률 표본 표준편차 × √252 |
+| Sharpe | (일별수익률 평균 − 일별 무위험수익률) / 표본 표준편차 × √252 |
+| 최대 낙폭 | min(P[t] / 해당 기간 누적 최고가격 − 1) |
+
+웹사이트의 무위험수익률은 연 0%입니다. 변동성이 0이면 Sharpe는 정의하지 않습니다.
+연도별 수익률은 전년도 마지막 공통 거래일 종가를 기준으로 첫 거래일 수익까지 포함합니다.
+
+양수·유한 가격, 중복 날짜, 거래일 일치 여부와 최신 기준일을 검증합니다.
+결측 가격을 임의로 채우지 않으며, 일부 ETF 수집 실패나 과거 데이터 범위 축소가 발생하면 새 데이터 게시를 중단합니다.
+원본 스냅샷과 메타데이터의 SHA-256 체크섬으로 저장 데이터의 무결성을 확인합니다.
+
+## 자동 갱신과 배포
+
+- GitHub Actions가 한국시간 평일 **19:23**에 수집을 예약합니다. 실행 시각은 지연될 수 있습니다.
+- 한국시간 18시 이전에는 당일 데이터를 제외하며, 휴장일에는 마지막 거래일 데이터를 사용합니다.
+- 수동 갱신: **Actions → Update ETF data and deploy → Run workflow**.
+- 검증을 통과한 결과만 `docs/data.js`에 저장하고, 원본 수집 산출물은 Actions에서 14일 보관합니다.
+- 공개 사이트는 GitHub Pages의 **main /docs** 설정으로 배포합니다.
+
+## 프로젝트 구조
 
 ```text
-kospi-factor-investing/
-├── data/raw/           # 공급자 가격 CSV + 출처/체크섬 JSON
-├── data/processed/     # 일별수익률, 누적수익률, 자산곡선, 낙폭
-├── src/data_loader.py  # 수집 어댑터, 저장, 검증
-├── src/metrics.py      # 데이터 소스와 독립적인 순수 분석 함수
-├── src/backtest.py     # 보유 기준선 분석 및 그림 저장
-├── notebooks/         # 대화형 분석 예제
-├── tests/             # 지표 정의와 데이터 검증 테스트
-├── results/           # 지표 JSON, 성과 PNG
-├── requirements.txt   # 실행 환경 버전 고정
-└── .gitignore
+├── config/etfs.json        # 비교 대상 ETF
+├── src/
+│   ├── data_loader.py     # 단일 ETF 수집·저장·체크섬 검증
+│   ├── update_data.py     # 네 ETF 수집·검증·스냅샷 게시
+│   ├── comparison.py      # 공통 거래일·연도별 비교
+│   ├── metrics.py         # 성과·위험 지표
+│   └── backtest.py        # 단일 자산 보유 분석
+├── docs/                  # GitHub Pages 화면·데이터 스냅샷
+├── data/raw/              # 원본·메타데이터
+├── data/processed/        # 가공 데이터
+├── notebooks/             # 대화형 분석 예제
+├── results/               # 분석 결과
+├── tests/                 # 계산·수집·게시 검증
+├── .github/workflows/     # 자동 갱신
+└── requirements.txt       # 의존성 버전
 ```
 
-## 데이터 소스 선택
+## 해석의 한계와 다음 연구
 
-기본값은 FinanceDataReader의 명시적 `NAVER:069500` 소스다. 자동 공급자 선택을 피하고,
-반환된 OHLCV를 그대로 저장한다. 실패 시 조용히 다른 소스로 바꾸지 않는다.
+현재 결과는 **공급자 종가 기반 가격 성과**입니다.
+분배금 재투자와 공급자의 과거 가격 조정 정책을 독립적으로 검증하지 않았으므로 총수익률이나 운용 능력 순위로 해석하지 않습니다.
+거래비용·세금은 제외하고, 보수는 가격에 반영된 범위 외에 별도 차감하지 않습니다.
+공통 날짜 검증은 거래소 공식 캘린더와의 완전성 대조를 대신하지 않습니다.
+KODEX 대비 상대 성과는 지수 대비 추적오차가 아닙니다.
 
-| 방식 | MVP에서의 판단 |
-|---|---|
-| FinanceDataReader / NAVER | 계정 없이 명시적 종목 조회 가능. 기본 후보이며 실제 조회 검증 결과는 아래 기록 |
-| yfinance / Yahoo | `069500.KS`, `auto_adjust=False` 명시. 대체 어댑터 제공. Yahoo의 가격 수정 및 접근 제한 가능 |
-| pykrx / KRX | 공식 거래소 기반 확장에 유용하지만 2026년 릴리스에 로그인/세션 관리가 추가되어 인증 의존성이 있음. 이번 MVP에서 실조회 비교하지 않음 |
+후속 연구는 분배금 포함 총수익률, NAV·지수 기준 추적차이와 추적오차, 거래대금·호가 스프레드 비교입니다.
+Momentum·Value·Quality 전략은 향후 확장 과제로, 현재 매매 신호·체결 엔진은 구현하지 않았습니다.
 
-Yahoo 대체 수집·분석:
+## 작업 방식
 
-```sh
-python -m src.data_loader --provider yahoo --start 2023-01-01 --end 2025-12-31
-python -m src.backtest --input data/raw/069500_yahoo_2023-01-01_2025-12-31.csv
-```
-
-Yahoo의 `Adj Close`가 반환되면 원본에 보존하지만 MVP 계산은 항상 `Close`를 사용한다.
-네이버 종가의 과거 수정 정책 및 분배금 재투자 처리는 독립적으로 검증하지 않았다.
-따라서 이 결과는 **공급자 종가 기반 가격 성과**이며 투자자의 분배금 포함 총수익률이라고 해석하면 안 된다.
-거래비용·세금도 포함하지 않는다. ETF 보수 등을 별도 차감하지 않으며 실제 NAV 추적오차 분석도 아니다.
-
-재현성은 버전 고정 + 원본 스냅샷 + SHA-256으로 확보한다. 나중에 재수집하면 공급자의 과거 가격 수정으로
-결과가 달라질 수 있다. 네이버 조회는 라이브러리 구현상 최근 약 6,000개 관측치로 제한될 수 있다.
-요청 기간과 실제 반환 기간을 원본 JSON에서 비교해야 하며, 내부 거래일 누락 여부는 거래소 캘린더와 대조하지 않는다.
-0·음수·결측·무한대 종가 및 중복 날짜는 거부한다. 휴장일이나 결측 가격을 임의로 채우지 않는다.
-
-참고한 1차 자료:
-- [FinanceDataReader](https://github.com/FinanceData/FinanceDataReader)
-- [네이버 조회 구현](https://github.com/FinanceData/FinanceDataReader/blob/master/src/FinanceDataReader/naver/data.py)
-- [yfinance download API](https://ranaroussi.github.io/yfinance/reference/api/yfinance.download.html)
-- [pykrx 로그인 대응 릴리스](https://github.com/sharebook-kr/pykrx/releases)
-
-## 계산 정의
-
-- 일별수익률: `P[t] / P[t-1] - 1`; 첫 행은 비교 대상이 없어 결측으로 유지.
-- 누적수익률: `P[t] / P[0] - 1`.
-- CAGR: `(P[-1] / P[0]) ** (365.25 / 실제 경과일수) - 1`.
-- 연환산 변동성: 일별수익률 표본 표준편차(`ddof=1`) × `sqrt(252)`.
-- Sharpe: `(일별수익률 평균 - 일별 무위험수익률) / 표본 표준편차 × sqrt(252)`.
-  일별 무위험수익률은 `(1 + 연 무위험수익률) ** (1/252) - 1`. 변동성 0이면 JSON `null`.
-- Maximum Drawdown: `min(P[t] / 과거 최고가격 - 1)`, 음수로 표시.
-
-관측치가 3개 미만이면 분석을 거부한다. 짧은 기간의 연환산 지표는 해석에 유의한다.
-
-## 확장 방향
-
-1. KOSPI200 종목별 가격을 같은 어댑터로 수집하고 날짜 × 종목 종가 패널 구성.
-2. 당시 구성종목 이력을 확보하여 생존편향 통제.
-3. Momentum 점수 산출과 월별 목표 비중 산출 모듈 분리.
-4. 신호 생성 다음 거래일 체결, 거래비용·회전율을 반영하는 포트폴리오 엔진 추가.
-5. Value/Quality는 DART 공시 시점 이후에만 이용 가능한 재무 데이터로 확장.
-6. 분배금·기업행동 처리 기준을 맞춘 전략/벤치마크 총수익률 비교.
-
-현재 `backtest.py`는 단일 자산 보유 기준선만 구현하며 신호·체결 엔진은 포함하지 않는다.
-
-## 실제 검증 기록 (2026-09-22)
-
-동일한 요청 기간 `2023-01-01` ~ `2025-12-31`로 실조회했다.
-
-| 소스 | 행 수 | 최초 거래일 | 최종 거래일 |
-|---|---:|---|---|
-| NAVER | 731 | 2023-01-02 | 2025-12-30 |
-| Yahoo | 712 | 2023-01-02 | 2025-12-30 |
-
-이번 환경에서 더 많은 관측치를 반환한 NAVER를 기본 소스로 선정했다.
-거래소 거래일 목록과 대조한 완전성 보증은 아니며, 공급자 간 가격 조정 차이도 있으므로 데이터를 혼합하지 않는다.
-`requirements.txt`에는 검증에 사용한 전체 의존성 버전을 고정했다.
-지표 공식, 상수가격, 비정상 입력, 체크섬 변조, Yahoo 날짜 경계, 빈 응답을 다루는 6개 테스트를 통과했다.
-
-## 포트폴리오 웹페이지
-
-`docs/index.html`을 브라우저로 열면 인터넷 연결 없이 연도별 성과와 차트를 볼 수 있습니다.
-이 페이지는 저장된 데이터 스냅샷을 사용하며 실시간 시세가 아닙니다.
-GitHub Pages를 사용할 경우 저장소 Settings → Pages에서 배포 브랜치의 `/docs` 폴더를 선택합니다.
-공개 웹사이트: https://wjyi0615.github.io/KOSPI200-ETF-LAB/
-
-## 웹페이지 공개 설정
-
-GitHub 저장소 **Settings → Pages → Deploy from a branch → main /docs → Save**를 선택합니다.
-배포 완료 후 GitHub가 표시하는 주소를 사용하세요.
-
-## 다음 단계: 운용사별 ETF 비교
-
-동일한 KOSPI200 지수를 추종하는 일반 ETF를 대상으로 공통 거래기간과 가격 조정 기준을 맞춥니다.
-레버리지·인버스·환헤지 등 구조가 다른 상품은 비교 대상에서 구분합니다.
-각 ETF의 수익률·변동성·낙폭을 비교하고, 총수익률과 NAV 데이터를 확보한 뒤 추적차이·추적오차 분석으로 확장합니다.
-
-## 자동 갱신
-
-`.github/workflows/update-etfs.yml`은 평일 한국시간 19:23에 KODEX 200, TIGER 200, RISE 200, PLUS 200의 NAVER 일별 데이터를 수집합니다. GitHub Actions에서 `workflow_dispatch`로 수동 실행할 수도 있습니다.
-
-수집은 장 마감 전 부분 봉을 피하기 위해 한국시간 18시 이전에는 전 거래일까지만 요청합니다. 네 ETF의 공통 거래일, 최신 기준일, 가격 유효성, 전년도 기준 가격을 모두 검증한 뒤에만 `docs/data.js`를 원자적으로 교체합니다. 하나라도 실패하면 기존 공개 데이터는 유지됩니다.
-
-GitHub Actions에서 `Update ETF data and deploy`가 첫 성공하면 웹사이트에 `2026 YTD`와 운용사별 비교표가 표시됩니다. 첫 실행 전에는 사이트가 데이터 준비 상태를 안내합니다.
+변경은 `codex/작업명` 브랜치에서 진행하고 PR 검토·병합 후 완료된 브랜치를 삭제합니다.
+`main`은 공개 버전을 유지하며, 자동 수집 결과는 워크플로가 갱신합니다.
