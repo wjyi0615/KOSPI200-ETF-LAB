@@ -1,5 +1,13 @@
 # KOSPI200-ETF-LAB
 
+## 🌐 웹사이트 바로 보기
+
+**[KOSPI200 ETF LAB 웹사이트 열기 →](https://wjyi0615.github.io/KOSPI200-ETF-LAB/)**
+
+브라우저에서 연도별 성과와 누적수익률·낙폭·종가 차트를 확인할 수 있습니다. 현재는 KODEX 200 기준선 분석을 제공합니다.
+
+[![KODEX 200 성과 분석 미리보기](docs/performance.png)](https://wjyi0615.github.io/KOSPI200-ETF-LAB/)
+
 여러 운용사의 KOSPI200 ETF를 비교하기 위한 Python 리서치 프로젝트입니다.
 현재 구현은 **KODEX 200 단일 ETF 기준선 MVP**이며, 다중 ETF 비교와 팩터 전략은 확장 예정입니다.
 
@@ -116,7 +124,7 @@ Yahoo의 `Adj Close`가 반환되면 원본에 보존하지만 MVP 계산은 항
 `docs/index.html`을 브라우저로 열면 인터넷 연결 없이 연도별 성과와 차트를 볼 수 있습니다.
 이 페이지는 저장된 데이터 스냅샷을 사용하며 실시간 시세가 아닙니다.
 GitHub Pages를 사용할 경우 저장소 Settings → Pages에서 배포 브랜치의 `/docs` 폴더를 선택합니다.
-실제 공개 주소가 생성되기 전까지는 외부에 공유할 수 있는 웹사이트가 아닙니다.
+공개 웹사이트: https://wjyi0615.github.io/KOSPI200-ETF-LAB/
 
 ## 웹페이지 공개 설정
 
