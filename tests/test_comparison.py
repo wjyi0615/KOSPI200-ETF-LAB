@@ -48,6 +48,14 @@ class ComparisonTests(unittest.TestCase):
                 publish_snapshot(older, path)
             self.assertEqual(path.read_bytes(), original)
 
+    def test_empty_seed_is_replaced(self):
+        data = build_dataset({'a': self.frame}, self.universe)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'data.js'
+            path.write_text('/* seed */\nwindow.ETF_DATA = null;\n', encoding='utf-8')
+            publish_snapshot(data, path)
+            self.assertIn('"schema_version":1', path.read_text(encoding='utf-8'))
+
     def test_partial_bar_cutoff(self):
         zone = ZoneInfo('Asia/Seoul')
         self.assertEqual(completed_date(datetime(2026, 9, 22, 17, tzinfo=zone)), '2026-09-21')
