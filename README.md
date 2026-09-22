@@ -136,3 +136,11 @@ GitHub 저장소 **Settings → Pages → Deploy from a branch → main /docs �
 동일한 KOSPI200 지수를 추종하는 일반 ETF를 대상으로 공통 거래기간과 가격 조정 기준을 맞춥니다.
 레버리지·인버스·환헤지 등 구조가 다른 상품은 비교 대상에서 구분합니다.
 각 ETF의 수익률·변동성·낙폭을 비교하고, 총수익률과 NAV 데이터를 확보한 뒤 추적차이·추적오차 분석으로 확장합니다.
+
+## 자동 갱신
+
+`.github/workflows/update-etfs.yml`은 평일 한국시간 19:23에 KODEX 200, TIGER 200, RISE 200, PLUS 200의 NAVER 일별 데이터를 수집합니다. GitHub Actions에서 `workflow_dispatch`로 수동 실행할 수도 있습니다.
+
+수집은 장 마감 전 부분 봉을 피하기 위해 한국시간 18시 이전에는 전 거래일까지만 요청합니다. 네 ETF의 공통 거래일, 최신 기준일, 가격 유효성, 전년도 기준 가격을 모두 검증한 뒤에만 `docs/data.js`를 원자적으로 교체합니다. 하나라도 실패하면 기존 공개 데이터는 유지됩니다.
+
+GitHub Actions에서 `Update ETF data and deploy`가 첫 성공하면 웹사이트에 `2026 YTD`와 운용사별 비교표가 표시됩니다. 첫 실행 전에는 사이트가 데이터 준비 상태를 안내합니다.

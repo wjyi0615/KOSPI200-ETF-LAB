@@ -1,0 +1,6 @@
+[
+  {"symbol":"069500","name":"KODEX 200","manager":"삼성자산운용","color":"#197681","source_url":"https://kind.krx.co.kr/disclosure/etfisudetail.do?method=searchEtfIsuSummary&strIsurCd=06950"},
+  {"symbol":"102110","name":"TIGER 200","manager":"미래에셋자산운용","color":"#d17720","source_url":"https://kind.krx.co.kr/disclosure/etfisudetail.do?method=searchEtfIsuSummary&strIsurCd=10211"},
+  {"symbol":"148020","name":"RISE 200","manager":"KB자산운용","color":"#6754b8","source_url":"https://www.riseetf.co.kr/prod/finderDetail/4435"},
+  {"symbol":"152100","name":"PLUS 200","manager":"한화자산운용","color":"#b44770","source_url":"https://www.plusetf.co.kr/product/detail?n=006184"}
+]
