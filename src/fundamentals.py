@@ -39,6 +39,24 @@ def validate_metadata(data):
                 raise ValueError('AUM requires dated KRW amount')
             if name == 'expenseRatio' and (value > .1 or record['unit'] != 'annual_fraction'):
                 raise ValueError('Fee must be an annual fraction, not percentage points')
+    for ticker, history in data.get('distributions', {}).items():
+        checked = date.fromisoformat(history['checkedAt'])
+        url = urlparse(history['sourceUrl'])
+        if (ticker not in data['funds'] or checked > date.today()
+                or url.scheme != 'https' or not url.netloc or not history['sourceName']
+                or history.get('complete') is not False or history.get('unit') != 'KRW_per_share'
+                or not isinstance(history.get('events'), list) or not history['events']):
+            raise ValueError('Invalid partial distribution history')
+        previous = None
+        for event in history['events']:
+            record = date.fromisoformat(event['recordDate'])
+            payment = date.fromisoformat(event['paymentDate'])
+            amount = event['amountPerShare']
+            if (payment < record or payment > checked or (previous and record <= previous)
+                    or isinstance(amount, bool) or not isinstance(amount, (int, float))
+                    or not isfinite(amount) or amount < 0):
+                raise ValueError('Invalid distribution date/order/amount')
+            previous = record
     return data
 
 
