@@ -112,3 +112,11 @@ Node 합성 현금흐름(정수좌수·잔여현금·입금 보정 MDD), 평탄 
 JS 문법 검사 및 파일 경로 확인 완료.
 브라우저 시각 검증은 미완료: 로컬 서버 연결 거부, file URL은 브라우저 보안 정책으로 차단됨. 이를 우회하지 않음.
 모바일·키보드 동작은 코드에 반영했지만 실제 브라우저에서 별도 확인 필요. 이 변경은 새 브랜치/PR에서 검토하고 공개 main에 자동 병합하지 않는다.
+
+## 후속: 기본 정보 연결 (codex/etf-fundamentals)
+
+Phase 2의 null 고정 필드를 공식 자료 snapshot adapter로 확장했습니다.
+변경: config/fundamentals.json, src/fundamentals.py, docs/fundamentals.js, starter-core.js, starter.js, index.html 및 테스트.
+총보수·상장일·순자산은 출처 및 항목별 날짜와 함께 표시하며 오래된 AUM을 현재 규모로 해석하지 않도록 경고합니다.
+NAVER 가격·거래량은 네 ETF 모두 2026-09-23까지 실제 수집 검증했습니다. 메타데이터는 가격 자동 갱신과 분리된 수동 검증 절차입니다.
+미완료: 동시 기준일 AUM 자동 수집, 분배금 총수익률, holdings/기여도. 기존 Phase 기록의 ‘미확보’는 당시 상태이며 최신 기본 정보 상태는 README 후속 절을 따릅니다.
