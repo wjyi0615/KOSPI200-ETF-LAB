@@ -35,3 +35,16 @@ for(const etf of catalog){
  assert.equal(etf.aum,null);assert.deepEqual(etf.distributions,[]);
 }
 console.log('Starter: cash flows, MDD, dates, missing data, attribution and 4 real snapshots passed.');
+vm.runInNewContext(fs.readFileSync('docs/fundamentals.js','utf8'),sandbox);
+const verified=C.catalog(sandbox.window.ETF_DATA,sandbox.window.ETF_FUNDAMENTALS);
+assert.equal(verified[0].expenseRatio,.0015);
+assert.equal(verified[1].inceptionDate,'2008-04-03');
+assert.equal(verified[2].expenseRatio,.00017);
+assert.equal(verified[3].aum,1528000000000);
+assert.ok(verified.every(e=>Number.isFinite(e.volume)));
+const broken=JSON.parse(JSON.stringify(sandbox.window.ETF_FUNDAMENTALS));
+broken.funds['069500'].aum.unit='억원';
+assert.equal(C.catalog(sandbox.window.ETF_DATA,broken)[0].aum,null);
+broken.funds['069500'].expenseRatio.sourceUrl='javascript:alert(1)';
+assert.equal(C.catalog(sandbox.window.ETF_DATA,broken)[0].expenseRatio,null);
+console.log('Fundamentals: verified sources, fractional fees, dated AUM and volume passed.');

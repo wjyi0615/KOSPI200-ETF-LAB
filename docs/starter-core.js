@@ -8,7 +8,7 @@
     percent: v => Number.isFinite(v) ? (v * 100).toFixed(2) + '%' : missing
   };
   /** Validate the immutable public snapshot before any page consumes it. */
-  function catalog(data) {
+  function catalog(data, metadata = root.ETF_FUNDAMENTALS) {
     if (!data || !Array.isArray(data.dates) || data.dates.length < 2 || !Array.isArray(data.universe) || !data.universe.length) throw Error('가격 데이터가 없습니다.');
     const dates = data.dates;
     if (dates.some((d,i) => !validDate(d) || (i && d <= dates[i-1]))) throw Error('가격 날짜가 올바르지 않습니다.');
@@ -19,14 +19,22 @@
       const prices = data.prices?.[e.symbol];
       if (!Array.isArray(prices) || prices.length !== dates.length || prices.some(p => !Number.isFinite(p) || p <= 0)) throw Error('유효하지 않은 가격 데이터입니다.');
       const volume = data.volumes?.[e.symbol]?.at(-1);
+      const details = metadata?.schema_version === 1 ? metadata.funds?.[e.symbol] || {} : {};
+      const accepted = {};
+      for (const key of ['aum','expenseRatio','inceptionDate']) {
+        const r = details[key];
+        if (!r || !validDate(r.checkedAt) || !/^https:\/\//.test(r.sourceUrl || '') || !r.sourceName || (r.asOf && (!validDate(r.asOf) || r.asOf > r.checkedAt))) continue;
+        const valid = key === 'inceptionDate' ? validDate(r.value) && r.value <= r.checkedAt : Number.isFinite(r.value) && r.value >= 0 && (key === 'aum' ? r.value > 0 && validDate(r.asOf) && r.unit === 'KRW' : r.value <= .1 && r.unit === 'annual_fraction');
+        if (valid) accepted[key] = r;
+      }
       return {
         ticker:e.symbol, name:e.name, issuer:e.manager, category:e.category || 'korea',
         benchmark:e.benchmark || 'KOSPI200', color:e.color, sourceUrl:e.source_url,
         price:prices.at(-1), asOf:dates.at(-1), dates, prices,
-        aum:null, expenseRatio:null, volume:Number.isFinite(volume) && volume >= 0 ? volume : null,
-        trackingError:null, premiumDiscount:null, dividendYield:null, inceptionDate:null,
+        aum:accepted.aum?.value ?? null, expenseRatio:accepted.expenseRatio?.value ?? null, volume:Number.isFinite(volume) && volume >= 0 ? volume : null,
+        trackingError:null, premiumDiscount:null, dividendYield:null, inceptionDate:accepted.inceptionDate?.value ?? null, metadata:accepted,
         holdings:[], distributions:[], nav:[], benchmarkPrices:[],
-        provenance:{provider:data.provider, priceBasis:data.price_basis, metadataStatus:'unavailable'},
+        provenance:{provider:data.provider, priceBasis:data.price_basis, metadataStatus:Object.keys(accepted).length ? 'dated_snapshot' : 'unavailable'},
         returns:{month:periodReturn(dates,prices,1), quarter:periodReturn(dates,prices,3), year:periodReturn(dates,prices,12)}
       };
     });
