@@ -106,10 +106,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--end", default=completed_date())
     parser.add_argument("--output", type=Path, default=ROOT / "docs/data.js")
+    parser.add_argument("--universe", type=Path, default=ROOT / "config/etfs.json")
     args = parser.parse_args()
     if args.end > completed_date():
         parser.error("end exceeds the latest completed-session cutoff")
-    universe = json.loads((ROOT / "config/etfs.json").read_text())
+    universe = json.loads(args.universe.read_text())
     raw_dir = ROOT / "data/raw" / datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%dT%H%M%S")
     dataset = build_dataset(collect(universe, args.end, raw_dir), universe)
     publish_snapshot(dataset, args.output)
