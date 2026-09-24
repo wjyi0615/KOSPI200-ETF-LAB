@@ -28,7 +28,7 @@
         if (valid) accepted[key] = r;
       }
       return {
-        ticker:e.symbol, name:e.name, issuer:e.manager, category:e.category || 'korea',
+        ticker:e.symbol, name:e.name, issuer:e.manager, category:e.category || 'equity', region:e.region || 'korea', strategy:e.strategy || 'broad', description:e.description || 'KOSPI200을 추종하는 주식 ETF입니다.', productType:e.productType || '국내 주식형 · 패시브',
         benchmark:e.benchmark || 'KOSPI200', color:e.color, sourceUrl:e.source_url,
         price:prices.at(-1), asOf:dates.at(-1), dates, prices,
         aum:accepted.aum?.value ?? null, expenseRatio:accepted.expenseRatio?.value ?? null, volume:Number.isFinite(volume) && volume >= 0 ? volume : null,
@@ -96,6 +96,10 @@
     if (holdings.some(h=>!Number.isFinite(h.previousWeight)||h.previousWeight<0||h.previousWeight>1||!Number.isFinite(h.priceReturn)||h.priceReturn < -1) || holdings.reduce((s,h)=>s+h.previousWeight,0)>1.000001) throw Error('전일 비중과 동일 기간 수익률을 확인해야 합니다.');
     return holdings.map(h=>({...h,contribution:h.previousWeight*h.priceReturn})).sort((a,b)=>b.contribution-a.contribution);
   }
-  const api={fmt,catalog,rangeStart,periodReturn,monthsBefore,simulate,contributions};
+  function filterEtfs(list,{category="all",region="all",strategy="all",query=""}={}) {
+    const q=query.trim().toLowerCase();
+    return list.filter(e=>(category==="all"||e.category===category)&&(region==="all"||e.region===region)&&(strategy==="all"||e.strategy===strategy)&&(e.name+e.ticker+e.issuer).toLowerCase().includes(q));
+  }
+  const api={filterEtfs,fmt,catalog,rangeStart,periodReturn,monthsBefore,simulate,contributions};
   if (typeof module !== 'undefined') module.exports=api; else root.ETFCore=api;
 })(typeof window !== 'undefined' ? window : globalThis);
