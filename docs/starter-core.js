@@ -27,13 +27,15 @@
         const valid = key === 'inceptionDate' ? validDate(r.value) && r.value <= r.checkedAt : Number.isFinite(r.value) && r.value >= 0 && (key === 'aum' ? r.value > 0 && validDate(r.asOf) && r.unit === 'KRW' : r.value <= .1 && r.unit === 'annual_fraction');
         if (valid) accepted[key] = r;
       }
+      const history = metadata?.schema_version === 1 ? metadata.distributions?.[e.symbol] : null;
+      const distributionHistory = validHistory(history) ? history : null;
       return {
         ticker:e.symbol, name:e.name, issuer:e.manager, category:e.category || 'equity', region:e.region || 'korea', strategy:e.strategy || 'broad', description:e.description || 'KOSPI200을 추종하는 주식 ETF입니다.', productType:e.productType || '국내 주식형 · 패시브',
         benchmark:e.benchmark || 'KOSPI200', color:e.color, sourceUrl:e.source_url,
         price:prices.at(-1), asOf:dates.at(-1), dates, prices,
         aum:accepted.aum?.value ?? null, expenseRatio:accepted.expenseRatio?.value ?? null, volume:Number.isFinite(volume) && volume >= 0 ? volume : null,
         trackingError:null, premiumDiscount:null, dividendYield:null, inceptionDate:accepted.inceptionDate?.value ?? null, metadata:accepted,
-        holdings:[], distributions:[], nav:[], benchmarkPrices:[],
+        holdings:[], distributions:distributionHistory?.events || [], distributionHistory, nav:[], benchmarkPrices:[],
         provenance:{provider:data.provider, priceBasis:data.price_basis, metadataStatus:Object.keys(accepted).length ? 'dated_snapshot' : 'unavailable'},
         returns:{month:periodReturn(dates,prices,1), quarter:periodReturn(dates,prices,3), year:periodReturn(dates,prices,12)}
       };
@@ -41,6 +43,14 @@
   }
   function validDate(s) {
     return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && Number.isFinite(Date.parse(s)) && new Date(s).toISOString().slice(0,10) === s;
+  }
+  /** Partial, paid records for display only; record dates are not ex-dates. */
+  function validHistory(h) {
+    return !!h && h.complete === false && h.unit === 'KRW_per_share' && validDate(h.checkedAt)
+      && h.checkedAt <= new Date().toISOString().slice(0,10) && /^https:\/\//.test(h.sourceUrl || '') && !!h.sourceName
+      && Array.isArray(h.events) && h.events.length > 0 && h.events.every((e,i) =>
+        validDate(e.recordDate) && validDate(e.paymentDate) && e.paymentDate >= e.recordDate && e.paymentDate <= h.checkedAt
+        && (!i || e.recordDate > h.events[i-1].recordDate) && Number.isFinite(e.amountPerShare) && e.amountPerShare >= 0);
   }
   /** Shift calendar months, clamping month-end rather than overflowing. */
   function monthsBefore(date, months) {
