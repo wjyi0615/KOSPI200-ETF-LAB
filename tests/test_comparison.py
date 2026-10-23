@@ -23,6 +23,12 @@ class ComparisonTests(unittest.TestCase):
         self.assertAlmostEqual(annual['metrics']['a']['cumulative_return'], .21)
         self.assertEqual(annual['metrics']['a']['return_observations'], 2)
 
+    def test_volume_is_published_on_the_same_calendar(self):
+        frame = self.frame.assign(Volume=[10, 20, 30, 40])
+        data = build_dataset({'a': frame}, self.universe)
+        self.assertEqual(data['volumes']['a'], [10, 20, 30, 40])
+        self.assertEqual(len(data['volumes']['a']), len(data['dates']))
+
     def test_no_fabricated_baseline(self):
         self.assertIsNone(period_rows(self.frame.iloc[2:], 2026))
 
