@@ -64,5 +64,7 @@ def build_dataset(frames: dict, universe: list, generated_at: str | None = None)
             "as_of": str(panel.index[-1].date()), "provider": "NAVER",
             "price_basis": "Vendor Close; distribution reinvestment and adjustment policy not independently verified",
             "universe": universe, "dates": panel.index.strftime("%Y-%m-%d").tolist(),
-            "prices": {symbol: panel[symbol].tolist() for symbol in panel}, "periods": periods,
+            "prices": {symbol: panel[symbol].tolist() for symbol in panel},
+            "volumes": {symbol: frames[symbol].loc[panel.index, "Volume"].tolist()
+                        for symbol in panel if "Volume" in frames[symbol]}, "periods": periods,
             "calendar_policy": "Same dates across all ETFs; no fill; exchange calendar not independently verified"}
